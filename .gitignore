@@ -1,0 +1,23 @@
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Dataset files
+data/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Trained models
+*.pth
+*.pt
+
+# IDE files
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
