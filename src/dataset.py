@@ -1,7 +1,7 @@
 import torch
 
 from torchvision import datasets, transforms
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, Subset
 
 
 # --------------------------------------------------
@@ -14,44 +14,75 @@ RANDOM_SEED = 42
 
 
 # --------------------------------------------------
-# IMAGE PREPROCESSING
+# TRAINING TRANSFORM
 # --------------------------------------------------
 
-transform = transforms.Compose([
-    transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+train_transform = transforms.Compose([
+
+    transforms.Resize(
+        (IMAGE_SIZE, IMAGE_SIZE)
+    ),
+
+    # Slight random rotation
+    transforms.RandomRotation(
+        degrees=10
+    ),
+
+    # Random brightness and contrast variation
+    transforms.ColorJitter(
+        brightness=0.3,
+        contrast=0.3
+    ),
+
     transforms.ToTensor()
 ])
 
 
 # --------------------------------------------------
-# LOAD DATASETS
+# VALIDATION / TEST TRANSFORM
 # --------------------------------------------------
 
-full_train_dataset = datasets.GTSRB(
+eval_transform = transforms.Compose([
+
+    transforms.Resize(
+        (IMAGE_SIZE, IMAGE_SIZE)
+    ),
+
+    transforms.ToTensor()
+])
+
+
+# --------------------------------------------------
+# LOAD TWO COPIES OF TRAINING DATA
+# --------------------------------------------------
+
+train_source = datasets.GTSRB(
     root="./data",
     split="train",
     download=True,
-    transform=transform
+    transform=train_transform
 )
 
-test_dataset = datasets.GTSRB(
+eval_source = datasets.GTSRB(
     root="./data",
-    split="test",
+    split="train",
     download=True,
-    transform=transform
+    transform=eval_transform
 )
 
 
 # --------------------------------------------------
-# TRAIN / VALIDATION SPLIT
+# CREATE REPRODUCIBLE INDICES
 # --------------------------------------------------
+
+dataset_size = len(train_source)
 
 train_size = int(
-    0.8 * len(full_train_dataset)
+    0.8 * dataset_size
 )
 
 val_size = (
-    len(full_train_dataset) - train_size
+    dataset_size - train_size
 )
 
 
@@ -59,11 +90,41 @@ generator = torch.Generator().manual_seed(
     RANDOM_SEED
 )
 
-
-train_dataset, val_dataset = random_split(
-    full_train_dataset,
-    [train_size, val_size],
+indices = torch.randperm(
+    dataset_size,
     generator=generator
+).tolist()
+
+
+train_indices = indices[:train_size]
+
+val_indices = indices[train_size:]
+
+
+# --------------------------------------------------
+# CREATE TRAIN / VALIDATION SUBSETS
+# --------------------------------------------------
+
+train_dataset = Subset(
+    train_source,
+    train_indices
+)
+
+val_dataset = Subset(
+    eval_source,
+    val_indices
+)
+
+
+# --------------------------------------------------
+# OFFICIAL TEST DATA
+# --------------------------------------------------
+
+test_dataset = datasets.GTSRB(
+    root="./data",
+    split="test",
+    download=True,
+    transform=eval_transform
 )
 
 
@@ -91,15 +152,10 @@ test_loader = DataLoader(
 
 
 # --------------------------------------------------
-# ONLY RUN WHEN dataset.py IS EXECUTED DIRECTLY
+# TEST DATA PIPELINE
 # --------------------------------------------------
 
 if __name__ == "__main__":
-
-    print(
-        "Total original training images:",
-        len(full_train_dataset)
-    )
 
     print(
         "Training images:",
@@ -120,19 +176,12 @@ if __name__ == "__main__":
         iter(train_loader)
     )
 
-    print("\nBatch information:")
-
     print(
-        "Image batch shape:",
+        "\nTraining batch shape:",
         images.shape
     )
 
     print(
         "Label batch shape:",
         labels.shape
-    )
-
-    print(
-        "First 10 labels:",
-        labels[:10]
     )

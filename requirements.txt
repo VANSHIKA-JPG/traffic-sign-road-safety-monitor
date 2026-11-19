@@ -1,0 +1,12 @@
+torch
+torchvision
+ultralytics
+opencv-python
+numpy
+pandas
+Pillow
+scikit-learn
+matplotlib
+streamlit
+imageio-ffmpeg
+huggingface-hub

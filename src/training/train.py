@@ -189,10 +189,14 @@ Path("outputs/models").mkdir(
     exist_ok=True
 )
 
+MODEL_SAVE_PATH = "outputs/models/simple_cnn_augmented.pth"
+
 torch.save(
     model.state_dict(),
-    "outputs/models/simple_cnn.pth"
+    MODEL_SAVE_PATH
 )
 
 print("Training complete.")
-print("Model saved to outputs/models/simple_cnn.pth")
+print(
+    f"Model saved to {MODEL_SAVE_PATH}"
+)
